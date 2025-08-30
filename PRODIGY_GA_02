@@ -1,0 +1,10 @@
+# Install using: pip install craiyon
+
+from craiyon import Craiyon
+
+generator = Craiyon()  # Create generator object
+result = generator.generate("A futuristic city floating in the clouds")
+
+# Save first image
+image = result.images[0]
+image.save("output_image.png")
