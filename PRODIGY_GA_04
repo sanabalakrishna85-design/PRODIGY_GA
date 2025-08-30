@@ -1,0 +1,31 @@
+import torch
+from torchvision import transforms
+from PIL import Image
+import matplotlib.pyplot as plt
+
+# Load the pre-trained Pix2Pix model from Torch Hub
+model = torch.hub.load('junyanz/pytorch-CycleGAN-and-pix2pix', 'pix2pix_facades', pretrained=True)
+model.eval()
+
+# Image preprocessing
+transform = transforms.Compose([
+    transforms.Resize((256, 256)),
+    transforms.ToTensor(),
+    transforms.Normalize((0.5,), (0.5,))
+])
+
+# Load and preprocess input image
+img_path = "input_image.jpg"  # Replace with your image
+input_image = Image.open(img_path).convert('RGB')
+input_tensor = transform(input_image).unsqueeze(0)
+
+# Generate output
+with torch.no_grad():
+    output_tensor = model(input_tensor)[0]
+
+# Post-process and display
+output_image = (output_tensor.detach().cpu().permute(1, 2, 0) + 1) / 2  # De-normalize
+plt.figure(figsize=(10,5))
+plt.subplot(1,2,1); plt.title("Input"); plt.imshow(input_image); plt.axis("off")
+plt.subplot(1,2,2); plt.title("Output"); plt.imshow(output_image); plt.axis("off")
+plt.show()
