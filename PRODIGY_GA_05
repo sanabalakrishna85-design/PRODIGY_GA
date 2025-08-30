@@ -1,0 +1,58 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torchvision import models, transforms
+from PIL import Image
+import matplotlib.pyplot as plt
+
+# Load image and resize
+def load_image(img_path, max_size=400):
+    image = Image.open(img_path).convert('RGB')
+    size = min(max(image.size), max_size)
+    transform = transforms.Compose([
+        transforms.Resize((size, size)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406],
+                             [0.229, 0.224, 0.225])
+    ])
+    image = transform(image).unsqueeze(0)
+    return image.to(device)
+
+# Show tensor as image
+def imshow(tensor, title=None):
+    image = tensor.clone().detach().squeeze(0)
+    image = image * torch.tensor([0.229, 0.224, 0.225]).view(3,1,1)
+    image = image + torch.tensor([0.485, 0.456, 0.406]).view(3,1,1)
+    image = image.clamp(0, 1)
+    plt.imshow(image.permute(1, 2, 0))
+    if title:
+        plt.title(title)
+    plt.axis("off")
+    plt.show()
+
+# Load content and style images
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+content = load_image("content.jpg")   # Replace with your content image path
+style = load_image("style.jpg")       # Replace with your style image path
+
+# Load pre-trained VGG19
+vgg = models.vgg19(pretrained=True).features.to(device).eval()
+
+# Define layers to extract features from
+style_layers = ['0', '5', '10', '19', '28']
+content_layers = ['21']
+
+# Function to get features from selected layers
+def get_features(image, model, layers):
+    features = {}
+    x = image
+    for name, layer in model._modules.items():
+        x = layer(x)
+        if name in layers:
+            features[name] = x
+    return features
+
+# Gram matrix for style
+def gram_matrix(tensor):
+    _, c, h, w = tensor.size()
+    tensor = tensor.view(c, h
